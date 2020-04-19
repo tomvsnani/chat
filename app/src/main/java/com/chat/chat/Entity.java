@@ -17,12 +17,36 @@ public class Entity  {
         this.id = id;
     }
 
-    @PrimaryKey
+    @PrimaryKey(autoGenerate = true)
     private int id;
     private String userName;
-    private String Message;
+    private String Message="";
     private String from;
+    private Boolean new_message;
+
+
+    public Entity() {
+
+    }
+
+    public Boolean getNew_message() {
+        return new_message;
+    }
+
+    public void setNew_message(Boolean new_message) {
+        this.new_message = new_message;
+    }
+
+    public String getLocalpath() {
+        return localpath;
+    }
+
+    public void setLocalpath(String localpath) {
+        this.localpath = localpath;
+    }
+
     private String to;
+    private String localpath;
 
     public String getLastonline() {
         return lastonline;
@@ -32,16 +56,36 @@ public class Entity  {
         this.lastonline = lastonline;
     }
 
-    public int getTimeofMessage() {
+
+    public long getTimeofMessage() {
         return timeofMessage;
     }
 
-    public void setTimeofMessage(int timeofMessage) {
+    public void setTimeofMessage(long timeofMessage) {
         this.timeofMessage = timeofMessage;
     }
 
     private String lastonline;
-    private int timeofMessage;
+    private long timeofMessage;
+    private String uri=null;
+
+    public Boolean getIsImage() {
+        return isImage;
+    }
+
+    public String getUri() {
+        return uri;
+    }
+
+    public void setUri(String uri) {
+        this.uri = uri;
+    }
+
+    public void setIsImage(Boolean isImage) {
+        this.isImage = isImage;
+    }
+
+    private Boolean isImage;
 
     public String getFrom() {
         return from;
@@ -96,7 +140,7 @@ public class Entity  {
             return true;
         Entity objec = (Entity) obj;
 //
-        return obj.getMessage().equals(this.getMessage());
+        return obj.getMessage().equals(this.getMessage()) && obj.getTimeofMessage()==(this.getTimeofMessage());
 
     }
 

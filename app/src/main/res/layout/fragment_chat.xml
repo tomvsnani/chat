@@ -11,6 +11,10 @@
         android:id="@+id/chatrecycler"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_margin="16dp"
+        android:layout_marginTop="0dp"
+        android:paddingTop="0dp"
+
         android:layout_weight="1"
 
         tools:context=".chatFragment">
@@ -20,29 +24,39 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-
+        android:layout_margin="8dp"
+        android:padding="8dp"
+        android:gravity="center"
+        android:background="@drawable/replysenddesign"
         android:orientation="horizontal">
 
         <EditText
             android:id="@+id/replytype"
             style="?attr/selectableItemBackground"
             android:layout_width="0dp"
-
-
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:clickable="true"
-            android:focusable="true"
+            android:background="@null"
+            android:layout_marginLeft="32dp"
             android:hint="Type a message"
+            android:maxLines="6"
             android:textColorHint="#e0e0e0"
+            android:textColor="#e0e0e0"
             android:textSize="18sp" />
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/ic_collections_black_24dp"
+            android:id="@+id/pick_images_to_send"/>
 
         <Button
             android:id="@+id/send"
-            style="?attr/selectableItemBackgroundBorderless"
+            style="?attr/borderlessButtonStyle"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
             android:layout_weight="0.5"
+            android:textColor="#e0e0e0"
             android:text="send" />
     </LinearLayout>
 </LinearLayout>

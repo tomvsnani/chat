@@ -1,32 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout  xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/chat_frame_layout"
     android:layout_width="match_parent"
+
+    android:background="@null"
+    android:layout_height="wrap_content">
+<LinearLayout
     android:id="@+id/chat_linear_layout"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_marginTop="20dp"
     android:background="@drawable/chat_text_design"
-    android:layout_marginLeft="8dp"
-    android:layout_marginRight="40dp"
-    android:padding="8dp"
-    android:orientation="vertical">
+    android:clickable="true"
+    android:focusable="true"
+    android:orientation="horizontal"
+    android:layout_marginBottom="8dp"
+    android:padding="8dp">
+
+
 
     <TextView
-        android:id="@+id/fromwhom"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="start"
-        android:layout_marginLeft="8dp"
-        android:text="from"
-        android:textColor="#666ad1"
-        android:textSize="18sp"
-        android:textStyle="bold" />
-
-    <TextView
+        android:gravity="end"
         android:id="@+id/messagereceived"
         android:layout_width="wrap_content"
+        android:layout_marginRight="16dp"
         android:layout_height="wrap_content"
         android:layout_marginLeft="8dp"
         android:text="message"
         android:textColor="#e0e0e0"
         android:textSize="18sp" />
+    <TextView
+        android:id="@+id/fromwhom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:text="from"
+        android:textColor="#666ad1"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+</LinearLayout>
 </LinearLayout>

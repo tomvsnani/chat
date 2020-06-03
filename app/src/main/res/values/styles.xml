@@ -1,0 +1,26 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">#00363a</item>
+        <item name="colorPrimaryDark">#00363a</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="windowNoTitle">true</item>
+        <item name="colorControlNormal">@color/colorAccent</item>
+        <item name="colorControlHighlight">@color/colorAccent</item>
+        <item name="windowActionBar">false</item>
+     <item name="android:windowIsTranslucent">true</item>
+       <item name="android:windowContentTransitions">true</item>
+        <item name="android:windowActivityTransitions">true</item>
+        <item name="android:windowSharedElementEnterTransition">
+            @transition/trans</item>
+        <item name="android:windowSharedElementExitTransition">
+            @transition/trans</item>
+        <item name="android:windowSharedElementReenterTransition">@transition/trans</item>
+        <item name="android:windowAllowEnterTransitionOverlap">true</item>
+
+
+    </style>
+
+</resources>

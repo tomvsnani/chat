@@ -1,7 +1,5 @@
 package com.chat.chat;
 
-import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -14,10 +12,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.content.ContextCompat;
-import androidx.core.graphics.drawable.RoundedBitmapDrawable;
-import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -25,11 +19,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Environment;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -42,12 +33,8 @@ import com.chat.chat.Database.Database;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
@@ -56,7 +43,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -66,22 +52,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.TimeZone;
 
 
 public class chatFragment extends AppCompatActivity {
-    DatabaseReference databaseReference;
+    DatabaseReference messagesReference;
     FloatingActionButton sendButton;
     EditText replyText;
     RecyclerView recyclerView;
@@ -100,7 +79,7 @@ public class chatFragment extends AppCompatActivity {
     String username;
     TextView username_on_toolbar_textView;
     TextView lastSeen_textview;
-    Entity entity;
+
     List<Entity> list = new ArrayList<>();
     LiveData<List<Entity>> local_db_list;
     ChildEventListener childEventListener;
@@ -112,13 +91,19 @@ public class chatFragment extends AppCompatActivity {
     ChildEventListener childEventListener1;
     ChildEventListener acknowledgelistener;
     DatabaseReference acknowledgeReference;
+    DatabaseReference statusReference;
+    GoogleSignInAccount googleSignInAccount;
+    String googleUserName;
+
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.fragment_chat);
         googleSignInClient = ((ApplicationClass) getApplication()).signInClient();
-        entity = new Entity();
+        googleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
+        googleUserName = googleSignInAccount.getDisplayName();
         sendButton = findViewById(R.id.send);
         replyText = findViewById(R.id.replytype);
         deliverSymbol = findViewById(R.id.deliveryReport);
@@ -130,12 +115,13 @@ public class chatFragment extends AppCompatActivity {
         username = getIntent().getStringExtra("username");
         calendar = Calendar.getInstance();
         profileImage = findViewById(R.id.profile_image_in_chat_activity);
-        localdatabase = Database.getInstance(this);
+        localdatabase = Database.getInstance(chatFragment.this);
         firebaseStorage = FirebaseStorage.getInstance();
         Log.d("timezone", String.valueOf(calendar.getTimeZone()));
         Log.d("time", String.valueOf(calendar.getTime()));
         database = FirebaseDatabase.getInstance();
         firebaseAuth = FirebaseAuth.getInstance();
+
 
         linearLayoutManager = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
         recyclerView = findViewById(R.id.chatrecycler);
@@ -147,6 +133,9 @@ public class chatFragment extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         submit();
+        statusReference= FirebaseDatabase.getInstance().getReference("users")
+                .child(googleUserName)
+                .child("status");
 
     }
 
@@ -176,33 +165,38 @@ public class chatFragment extends AppCompatActivity {
             });
 
 
+//            FirebaseDatabase.getInstance().getReference("users")
+//                    .child(username)
+//                    .child("messageId")
+//                    .child(GoogleSignIn.getLastSignedInAccount(getApplicationContext()).getDisplayName()).addListenerForSingleValueEvent(new ValueEventListener() {
+//                @Override
+//                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+//                    Long l=0L;
+//                    if(dataSnapshot.getValue()==null) {
+//                        FirebaseDatabase.getInstance().getReference("users")
+//                                .child(GoogleSignIn.getLastSignedInAccount(getApplicationContext()).getDisplayName())
+//                                .child("messageId")
+//                                .child(username).setValue(l);
+//                    }
+//                    else{
+//                        l= (Long) dataSnapshot.getValue();
+//                        FirebaseDatabase.getInstance().getReference("users")
+//                                .child(GoogleSignIn.getLastSignedInAccount(getApplicationContext()).getDisplayName())
+//                                .child("messageId")
+//                                .child(username).setValue(l);
+//                    }
+//
+//                }
 
-
-            FirebaseDatabase.getInstance().getReference("users")
-                    .child(GoogleSignIn.getLastSignedInAccount(getApplicationContext()).getDisplayName())
-                    .child("messageId")
-                    .child(username).addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    Long l=0L;
-                    if(dataSnapshot.getValue()==null) {
-                        FirebaseDatabase.getInstance().getReference("users")
-                                .child(GoogleSignIn.getLastSignedInAccount(getApplicationContext()).getDisplayName())
-                                .child("messageId")
-                                .child(username).setValue(l);
-                    }
-
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                }
-            });
-
-
+//                @Override
+//                public void onCancelled(@NonNull DatabaseError databaseError) {
+//
+//                }
+//            });
+//
+//
         }
-
+//
     }
 
 
@@ -212,9 +206,13 @@ public class chatFragment extends AppCompatActivity {
         super.onBackPressed();
     }
 
+    @Override
+    protected void onStop() {
+        Log.d("activitystopped", "stopped");
+        super.onStop();
+    }
 
-
-//    @Override
+    //    @Override
 //    protected void onPause() {
 //
 //        if (GoogleSignIn.getLastSignedInAccount(this) != null)
@@ -230,14 +228,13 @@ public class chatFragment extends AppCompatActivity {
 //    }
 
 
-
-
     private void retrieve_local_db() {
         local_db_list = localdatabase.dao().getdatabychat(GoogleSignIn.getLastSignedInAccount(this).getDisplayName(), username);
         local_db_list.observe(chatFragment.this, new Observer<List<Entity>>() {
             @Override
             public void onChanged(final List<Entity> entities) {
-                Log.d("calledonupdate", "yes");
+                for (Entity e : entities)
+                    Log.d("messageidlist", e.getMessageId().toString());
                 chatAdapter.submit(entities, recyclerView);
 
             }
@@ -250,14 +247,12 @@ public class chatFragment extends AppCompatActivity {
         super.onStart();
 
         if (GoogleSignIn.getLastSignedInAccount(this) != null)
-            FirebaseDatabase.getInstance().getReference("users")
-                    .child(GoogleSignIn.getLastSignedInAccount(this).getDisplayName())
-                    .child("status").setValue("online");
+           statusReference.setValue("online");
 
-        databaseReference = database.getReference("users")
-                .child(GoogleSignIn.getLastSignedInAccount(chatFragment.this).getDisplayName());
+        messagesReference = database.getReference("users")
+                .child(googleUserName).child("messages").child(username)
 
-        childEventListener = databaseReference.child("messages").child(username).addChildEventListener(new ChildEventListener() {
+        childEventListener = messagesReference.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull final DataSnapshot dataSnapshot, @Nullable String s) {
                 Entity entity = dataSnapshot.child("entity").getValue(Entity.class);
@@ -267,7 +262,7 @@ public class chatFragment extends AppCompatActivity {
                 insertEntityinLocalDb(entity, "ack");
 
                 String key = dataSnapshot.getKey();
-                databaseReference.child("messages").child(username).child(key).removeValue();
+                messagesReference.child("messages").child(username).child(key).removeValue();
 
             }
 
@@ -293,23 +288,26 @@ public class chatFragment extends AppCompatActivity {
         });
 
 
-        acknowledgeReference = databaseReference.child("acknowledgement").child(username);
-        acknowledgelistener = databaseReference.child("acknowledgement").child(username).addChildEventListener(new ChildEventListener() {
+        acknowledgeReference = messagesReference.child("acknowledgement").child(username);
+        acknowledgelistener = messagesReference.child("acknowledgement").child(username).addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull final DataSnapshot dataSnapshot, @Nullable String s) {
                 Thread thread = new Thread(new Runnable() {
                     @Override
                     public void run() {
                         Long lo = (Long) dataSnapshot.getValue();
-                        Entity entity1 = localdatabase.dao().getdatabyMessageid(lo.intValue());
-                        if(entity1!=null)
-                        Log.d("entityyyy",entity1.getMessage());
+                        Log.d("messageidack", String.valueOf(lo));
+                        Entity entity1 = localdatabase.dao().getdatabyMessageid(lo);
+
+
                         if (entity1 != null) {
+                            Log.d("entityyyy", entity1.getMessage());
                             entity1.setSent_status("seen");
                             localdatabase.dao().update(entity1);
-                            //databaseReference.child("acknowledgement").child(username).child(dataSnapshot.getKey()).removeValue();
-
                         }
+                        //databaseReference.child("acknowledgement").child(username).child(dataSnapshot.getKey()).removeValue();
+
+
                         ;
                     }
                 });
@@ -340,14 +338,12 @@ public class chatFragment extends AppCompatActivity {
         });
 
 
-
-
-
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (v.getId() == R.id.send) {
                     if (!replyText.getText().toString().equals("")) {
+                        Entity entity = new Entity();
                         String s = replyText.getText().toString();
                         entity.setFrom(GoogleSignIn.getLastSignedInAccount(getApplicationContext()).getDisplayName());
                         entity.setTo(username);
@@ -357,48 +353,41 @@ public class chatFragment extends AppCompatActivity {
                         entity.setNew_message(true);
 
 
-
                         if (GoogleSignIn.getLastSignedInAccount(getApplicationContext()) != null) {
-                            databaseReference1 = database.getReference("users").
-                                    child(username)
-                                    .child("messages")
-                                    .child(GoogleSignIn.getLastSignedInAccount(getApplicationContext()).getDisplayName());
-                            final String st = databaseReference1.push().getKey();
+
 //                            databaseReference1.child(GoogleSignIn.getLastSignedInAccount(getApplicationContext()).getDisplayName()).child("messages")
 //                                    .child(username).child(st).child("entity").setValue(entity);
 
 
+//                            FirebaseDatabase.getInstance().getReference("users")
+//                                    .child(GoogleSignIn.getLastSignedInAccount(getApplicationContext()).getDisplayName())
+//                                    .child("messageId")
+//                                    .child(username).addListenerForSingleValueEvent(new ValueEventListener() {
+//                                @Override
+//                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+//
+//
+//                                 Long  l= (Long) dataSnapshot.getValue()+1;
+//
+//
+//                                    FirebaseDatabase.getInstance().getReference("users")
+//                                            .child(GoogleSignIn.getLastSignedInAccount(getApplicationContext()).getDisplayName())
+//                                            .child("messageId")
+//                                            .child(username).setValue(l);
 
-                            FirebaseDatabase.getInstance().getReference("users")
-                                    .child(GoogleSignIn.getLastSignedInAccount(getApplicationContext()).getDisplayName())
-                                    .child("messageId")
-                                    .child(username).addListenerForSingleValueEvent(new ValueEventListener() {
-                                @Override
-                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            // }
 
-
-                                 Long  l= (Long) dataSnapshot.getValue()+1;
-
-
-                                    FirebaseDatabase.getInstance().getReference("users")
-                                            .child(GoogleSignIn.getLastSignedInAccount(getApplicationContext()).getDisplayName())
-                                            .child("messageId")
-                                            .child(username).setValue(l);
-                                    entity.setMessageId(l);
-                                    databaseReference1.child(st).setValue(entity);
-                                }
-
-                                @Override
-                                public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                                }
-                            });
+//                                @Override
+//                                public void onCancelled(@NonNull DatabaseError databaseError) {
+//
+//                                }
+//                            });
 
 
                         }
 
 
-                        insertEntityinLocalDb(entity, "no");
+                        insertEntityinLocalDb(entity, "send");
                     }
                 }
             }
@@ -436,7 +425,31 @@ public class chatFragment extends AppCompatActivity {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
+
                 long i = localdatabase.dao().insert(entity);
+                if (ack.equals("send")) {
+                    databaseReference1 = database.getReference("users").
+                            child(username)
+                            .child("messages")
+                            .child(GoogleSignIn.getLastSignedInAccount(getApplicationContext()).getDisplayName());
+                    final String st = databaseReference1.push().getKey();
+
+                    if (i > 1)
+                        entity.setMessageId(localdatabase.dao().getdatabyid((int) (i - 1)).getMessageId() + 1);
+                    else
+                        entity.setMessageId(entity.getMessageId() + 1);
+
+                    Entity entity1 = new Entity();
+                    entity1 = entity;
+                    entity1.setId((int) i);
+                    Log.d("messageidupdated", String.valueOf(localdatabase.dao().update(entity1)));
+                    databaseReference1.child(st).child("entity").setValue(entity);
+                    Log.d("messageidassignedsend", String.valueOf(entity1.getMessageId()));
+
+
+                }
+                Log.d("entityyy", "ls  " + entity.getMessage());
+
                 if (ack.equals("ack")) {
 
                     String acknowledge_key = FirebaseDatabase.getInstance()
@@ -453,8 +466,8 @@ public class chatFragment extends AppCompatActivity {
                             .child(acknowledge_key)
                             .setValue(entity.getMessageId());
                 }
-                Entity entity1 = localdatabase.dao().getdatabyid((int) i);
-                Log.d("entityyy","ls  "+entity1.getMessage());
+//                Entity entity1 = localdatabase.dao().getdatabyid((int) i);
+
             }
 
         });
@@ -507,6 +520,7 @@ public class chatFragment extends AppCompatActivity {
                 @Override
                 public void onComplete(@NonNull Task<Uri> task) {
                     if (task.isSuccessful()) {
+                        Entity entity = new Entity();
                         entity.setFrom(GoogleSignIn.getLastSignedInAccount(getApplicationContext()).getDisplayName());
                         entity.setTo(username);
                         entity.setIsImage(true);

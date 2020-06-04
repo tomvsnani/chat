@@ -29,7 +29,7 @@ public interface Dao {
     public Entity getdatabyid(int id);
 
     @Query("SELECT *FROM Entity WHERE messageId=:id ")
-    public Entity getdatabyMessageid(int id);
+    public Entity getdatabyMessageid(Long id);
 
     @Query("SELECT *FROM Entity WHERE (`from`=:from OR `from`=:to) AND (`to`=:to OR `to`=:from)   ")
     public LiveData<List<Entity>> getdatabychat(String from,String to);

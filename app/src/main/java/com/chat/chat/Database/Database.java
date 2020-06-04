@@ -17,7 +17,8 @@ public abstract class Database extends RoomDatabase {
         if (instance == null) {
             synchronized (object) {
 
-                instance = Room.databaseBuilder(context.getApplicationContext(), Database.class, "chat").fallbackToDestructiveMigration().allowMainThreadQueries().build();
+                instance = Room.databaseBuilder(context.getApplicationContext(), Database.class, "chat").
+                        fallbackToDestructiveMigration().allowMainThreadQueries().build();
             }
         }
         return instance;

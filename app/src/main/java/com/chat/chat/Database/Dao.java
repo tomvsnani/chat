@@ -22,11 +22,9 @@ public interface Dao {
     @Delete
     public void delete(Entity entity);
 
-    @Query("SELECT *FROM Entity ")
-    public LiveData<List<Entity>> getTotaldata();
 
     @Query("SELECT *FROM Entity WHERE id=:id ")
-    public Entity getdatabyid(int id);
+    public LiveData<Entity> getdatabyid(Long id);
 
     @Query("SELECT *FROM Entity WHERE messageId=:id ")
     public Entity getdatabyMessageid(Long id);
@@ -35,7 +33,7 @@ public interface Dao {
     public LiveData<List<Entity>> getdatabychat(String from,String to);
 
     @Query("SELECT * FROM ENTITY WHERE `to`=:to LIMIT 1")
-    public Entity get_chat_opened_user(String to);
+    public LiveData<Entity> get_chat_opened_user(String to);
 
     @Query("SELECT * FROM ENTITY WHERE purpose=:lastseen")
     public LiveData<Entity> getpurposeEntity(String lastseen);

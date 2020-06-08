@@ -18,6 +18,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
@@ -37,17 +38,24 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ServerValue;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private static final Integer PERMISSION_CONSTANT = 1;
-    GoogleSignInOptions googleSignInOptions;
+    private static List<String> list = new ArrayList<>();
+    FloatingActionButton addConnectionsFloatingButton;
     GoogleSignInClient googleSignInClient;
     GoogleSignInAccount googleSignInAccount;
     FirebaseAuth firebaseAuth;
@@ -55,39 +63,37 @@ public class MainActivity extends AppCompatActivity {
     Toolbar toolbar;
     int RC_SIGN_IN = 1;
     RecyclerView recyclerView;
-    LinearLayoutManager linearLayoutManager;
-  //  ImageView firstimage;
+    DatabaseReference check_if_online;
     Adapter adapter;
     Button pickImage;
     ImageView imageselected;
-    int count=0;
-    List<Integer> list = new ArrayList<>();
+    DatabaseReference userslist_databaseReference;
+    FirebaseDatabase database;
+    ChildEventListener childEventListener;
+
+
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-//            getWindow().getDecorView().setClipBounds(new Rect(100,100,100,100));
-//        }
-      //  getWindow().getAttributes().verticalMargin=300;
-//        getWindow().getAttributes().height=getResources().getDisplayMetrics().heightPixels/2;
-//        getWindow().getAttributes().width=getResources().getDisplayMetrics().heightPixels/2;
+
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //firstimage=findViewById(R.id.firstimage);
         googleSignInClient = ((ApplicationClass) getApplication()).signInClient();
         firebaseAuth = FirebaseAuth.getInstance();
         signInButton = findViewById(R.id.gsignin);
-        toolbar=findViewById(R.id.toolbar);
+        toolbar = findViewById(R.id.toolbar);
         recyclerView = findViewById(R.id.recycler);
         pickImage = findViewById(R.id.pickimage);
         imageselected = findViewById(R.id.imageSelected);
+        addConnectionsFloatingButton=findViewById(R.id.add_connections);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
         recyclerView.setLayoutManager(linearLayoutManager);
         adapter = new Adapter(this, googleSignInClient);
         recyclerView.setAdapter(adapter);
-        adapter.submit();
+        database = FirebaseDatabase.getInstance();
+
         // setSupportActionBar(toolbar);
         if (!(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
                 && ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)) {
@@ -104,52 +110,110 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        if(GoogleSignIn.getLastSignedInAccount(this)!=null)
-        FirebaseDatabase.getInstance().getReference("users").child(GoogleSignIn.getLastSignedInAccount(this).getDisplayName()).child("status").setValue(ServerValue.TIMESTAMP);
+        if (GoogleSignIn.getLastSignedInAccount(this) != null)
+            FirebaseDatabase.getInstance().getReference("users")
+                    .child(GoogleSignIn.getLastSignedInAccount(this).getDisplayName())
+                    .child("status")
+                    .setValue(ServerValue.TIMESTAMP);
+
+    }
+
+    @Override
+    protected void onStop() {
+        list.clear();
+        super.onStop();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if(GoogleSignIn.getLastSignedInAccount(this)!=null)
-        FirebaseDatabase.getInstance().getReference("users").child(GoogleSignIn.getLastSignedInAccount(this).getDisplayName()).child("status").setValue("online");
+        if (GoogleSignIn.getLastSignedInAccount(this) != null)
+            FirebaseDatabase.getInstance().getReference("users")
+                    .child(GoogleSignIn.getLastSignedInAccount(this).getDisplayName())
+                    .child("status")
+                    .setValue("online");
 
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == PERMISSION_CONSTANT) {
-
-            if (!(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-
-                AlertDialog dialog = new AlertDialog.Builder(this).create();
-                dialog.setMessage("You have to grant read and write permissions to share media with other connections." +
-                        "Do you want to grant permissions ?");
-                dialog.setButton(AlertDialog.BUTTON_POSITIVE, "Yes", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_CONSTANT);
-                        }
-
-                    }
-                });
-                dialog.setButton(AlertDialog.BUTTON_NEGATIVE, "No", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                });
-                dialog.show();
-            }
-        }
-
-    }
 
     @Override
     protected void onStart() {
         super.onStart();
+
+        setUpReferences();
+
+        setUpClickListeners();
+
+    }
+
+    private void setUpReferences() {
+        if (GoogleSignIn.getLastSignedInAccount(this) != null) {
+
+            userslist_databaseReference = database.getReference("users");
+            userslist_databaseReference.child(GoogleSignIn.getLastSignedInAccount(MainActivity.this).getDisplayName())
+                    .child("status")
+                    .setValue("online");
+
+            childEventListener = userslist_databaseReference.addChildEventListener(new ChildEventListener() {
+                @Override
+                public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+                    list.add(dataSnapshot.getKey());
+                    adapter.submitList(list);
+
+                }
+
+                @Override
+                public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+                }
+
+                @Override
+                public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+                    list.remove(dataSnapshot.getKey());
+                    adapter.submitList(list);
+                }
+
+                @Override
+                public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
+
+        }
+
+
+        check_if_online = database.getReference(".info/connected");
+        check_if_online.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                Boolean bool = dataSnapshot.getValue(Boolean.class);
+
+                if (bool) {
+                    if (GoogleSignIn.getLastSignedInAccount(MainActivity.this) != null) {
+                        userslist_databaseReference.child(GoogleSignIn.getLastSignedInAccount(MainActivity.this).getDisplayName())
+                                .child("status").onDisconnect().setValue(ServerValue.TIMESTAMP);
+                        userslist_databaseReference.child(GoogleSignIn.getLastSignedInAccount(MainActivity.this).getDisplayName())
+                                .child("status").setValue("online");
+
+                    }
+                }
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    private void setUpClickListeners() {
         signInButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -158,10 +222,20 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-        pickImage.setOnClickListener(new View.OnClickListener() {
+
+
+        addConnectionsFloatingButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
+            }
+        });
+
+
+
+        pickImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
 
 
 //                Thread thread = new Thread(new Runnable() {
@@ -196,7 +270,6 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-
     }
 
     @Override
@@ -209,7 +282,7 @@ public class MainActivity extends AppCompatActivity {
 
             } catch (ApiException e) {
                 e.printStackTrace();
-                Log.d("ddddd",e.toString());
+                Log.d("ddddd", e.toString());
             }
         }
         if (requestCode == 1) {
@@ -221,5 +294,36 @@ public class MainActivity extends AppCompatActivity {
 //          intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 //          startActivity(intent);
         }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_CONSTANT) {
+
+            if (!(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+
+                AlertDialog dialog = new AlertDialog.Builder(this).create();
+                dialog.setMessage("You have to grant read and write permissions to share media with other connections." +
+                        "Do you want to grant permissions ?");
+                dialog.setButton(AlertDialog.BUTTON_POSITIVE, "Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_CONSTANT);
+                        }
+
+                    }
+                });
+                dialog.setButton(AlertDialog.BUTTON_NEGATIVE, "No", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                dialog.show();
+            }
+        }
+
     }
 }

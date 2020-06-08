@@ -1,29 +1,20 @@
 package com.chat.chat;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Environment;
-import android.os.health.TimerStat;
-import android.renderscript.ScriptGroup;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -33,25 +24,17 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
 import com.chat.chat.Database.Database;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.ChildEventListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ServerValue;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -61,24 +44,19 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.TimeZone;
 
-public class ChatAdapter extends ListAdapter {
+public class ChatAdapter extends ListAdapter<Entity, RecyclerView.ViewHolder> {
     public static List<Entity> list = new ArrayList<>();
 
     Context context;
     GoogleSignInClient googleSignInClient;
     chatFragment chatFragment;
-    SimpleDateFormat f;
+    SimpleDateFormat simpleDateFormat;
     String username;
     RecyclerView recyclerView;
 
@@ -89,8 +67,8 @@ public class ChatAdapter extends ListAdapter {
 
         this.context = context;
         this.chatFragment = (com.chat.chat.chatFragment) context;
-        f = new SimpleDateFormat("yyyy-MMM-dd hh:mm a");
-        f.setTimeZone(TimeZone.getDefault());
+        simpleDateFormat = new SimpleDateFormat("yyyy-MMM-dd hh:mm a", Locale.getDefault());
+        simpleDateFormat.setTimeZone(TimeZone.getDefault());
         this.username = username;
         this.recyclerView = recyclerView;
 
@@ -99,31 +77,28 @@ public class ChatAdapter extends ListAdapter {
 
 
     @Override
-    public void submitList(@Nullable List list) {
+    public void submitList(@Nullable List<Entity> list) {
         Log.d("inchatsize", String.valueOf(list.size()));
-       // recyclerView.setItemViewCacheSize(getItemCount());
+        // recyclerView.setItemViewCacheSize(getItemCount());
         super.submitList(list != null ? new ArrayList<Entity>(list) : null);
     }
 
-    public void submit(List list, final RecyclerView recyclerView) {
+    public void submit(List<Entity> list, final RecyclerView recyclerView) {
         ChatAdapter.list = list;
 
         submitList(list);
         recyclerView.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if(getCurrentList().size()>0)
-                recyclerView.scrollToPosition(getCurrentList().size() - 1);
+                if (getCurrentList().size() > 0)
+                    recyclerView.scrollToPosition(getCurrentList().size() - 1);
             }
         }, 100);
     }
 
     @Override
     public int getItemViewType(int position) {
-
-
         if (getCurrentList().size() > 0) {
-
             Entity entity = (Entity) getCurrentList().get(position);
 //            Log.d("viewType",entity.getUri());
             if (entity.getIsImage())
@@ -156,17 +131,12 @@ public class ChatAdapter extends ListAdapter {
         return dp * context.getResources().getDisplayMetrics().density;
     }
 
-    public float convertPxToDp(Context context, float px) {
-        return px / context.getResources().getDisplayMetrics().density;
-    }
 
     public Bitmap scaleCenterCrop(Bitmap source, int newHeight, int newWidth) {
         int sourceWidth = source.getWidth();
         int sourceHeight = source.getHeight();
 
-        // Compute the scaling factors to fit the new height and width, respectively.
-        // To cover the final image, the final scaling will be the bigger
-        // of these two.
+
         float xScale = (float) newWidth / sourceWidth;
         float yScale = (float) newHeight / sourceHeight;
         float scale = Math.max(xScale, yScale);
@@ -175,49 +145,36 @@ public class ChatAdapter extends ListAdapter {
         float scaledWidth = scale * sourceWidth;
         float scaledHeight = scale * sourceHeight;
 
-        // Let's find out the upper left coordinates if the scaled bitmap
-        // should be centered in the new size give by the parameters
         float left = (newWidth - scaledWidth) / 2;
         float top = (newHeight - scaledHeight) / 2;
 
         // The target rectangle for the new, scaled version of the source bitmap will now
         // be
 
-        Rect rect=new Rect(0,sourceHeight/2,(int)sourceWidth,(int)sourceHeight+sourceHeight/2);
-       // Bitmap b=Bitmap.createScaledBitmap(source,(int)scaledWidth,(int)scaledHeight,false);
+        Rect rect = new Rect(0, sourceHeight / 2, (int) sourceWidth, (int) sourceHeight + sourceHeight / 2);
+        // Bitmap b=Bitmap.createScaledBitmap(source,(int)scaledWidth,(int)scaledHeight,false);
         FileOutputStream out = null;
 //        RectF targetRect = new RectF(left,top, (int)scaledWidth,(int)scaledHeight+top);
-        RectF targetRect = new RectF(0,0, (int)scaledWidth,(int)scaledHeight);
+        RectF targetRect = new RectF(0, 0, (int) scaledWidth, (int) scaledHeight);
 
         // Finally, we create a new bitmap of the specified size and draw our new,
         // scaled bitmap onto it.
-        Bitmap dest = Bitmap.createBitmap((int)newWidth,(int)newHeight, source.getConfig());
+        Bitmap dest = Bitmap.createBitmap((int) newWidth, (int) newHeight, source.getConfig());
         Canvas canvas = new Canvas(dest);
-       // canvas.drawColor(Color.RED);
-        Paint paint=new Paint();
+        // canvas.drawColor(Color.RED);
+        Paint paint = new Paint();
         paint.setAntiAlias(true);
         paint.setFilterBitmap(true);
-        canvas.drawBitmap(source, rect,targetRect, paint);
+        canvas.drawBitmap(source, rect, targetRect, paint);
 
-
-
-//
-//
-//
-//        Log.d("pixelsize", "scaledheight " + scaledHeight);
-//        Log.d("pixelsize", "scaledwidth " + scaledWidth);
-//        Log.d("pixelsize", "h  " + newHeight);
-//        Log.d("pixelsize", "w " + newWidth);
-//        Log.d("pixelsize", "sw " + sourceWidth);
-//        Log.d("pixelsize", "sh " + sourceHeight);
-//        Log.d("pixelsize", "defaultdisplay " + left + "  " + top);
 
         return dest;
     }
 
     @Override
     public long getItemId(int position) {
-        return position;
+        Entity entity = (Entity) getCurrentList().get(position);
+        return entity.getMessageId();
     }
 
     @Override
@@ -231,20 +188,18 @@ public class ChatAdapter extends ListAdapter {
                 ((Holder) holder).messageText.setVisibility(View.VISIBLE);
                 ((Holder) holder).messageText.setText(s.getMessage());
 
-
-                ((Holder) holder).fromtext.setText(f.format(s.getTimeofMessage()).split(" ")[1]);
-
+                ((Holder) holder).fromtext.setText(simpleDateFormat.format(s.getTimeofMessage()).split(" ")[1]);
 
                 if (GoogleSignIn.getLastSignedInAccount(context).getDisplayName() != null
                         && s.getFrom().equals(GoogleSignIn.getLastSignedInAccount(context).getDisplayName())) {
                     ((Holder) holder).frameLayout.setGravity(Gravity.END);
                     ((Holder) holder).imageButton.setVisibility(View.VISIBLE);
-                    if(s.getSent_status()!=null && !s.getSent_status().equals("")) {
-                        if (s.getSent_status().equals("sent")) {
-                            ((Holder) holder).imageButton.setImageResource(R.drawable.sent);
-                        }
-                        if (s.getSent_status().equals("seen"))
-                            ((Holder) holder).imageButton.setImageResource(R.drawable.delivered);
+
+                    if (s.getSent_status().equals("seen"))
+                        ((Holder) holder).imageButton.setImageResource(R.drawable.delivered);
+
+                    else {
+                        ((Holder) holder).imageButton.setImageResource(R.drawable.sent);
                     }
 //                    ViewGroup.LayoutParams marginLayoutParams= ((Holder) holder).linearLayout.getLayoutParams();
 //                    ((ViewGroup.MarginLayoutParams) marginLayoutParams).leftMargin= (int) (chatFragment.getResources().getDisplayMetrics().widthPixels*((float)1/4));
@@ -325,10 +280,17 @@ public class ChatAdapter extends ListAdapter {
     }
 
     private void access_image_from_local_db(@NonNull final RecyclerView.ViewHolder holder, final Entity s) {
-        Thread thread = new Thread(new Runnable() {
+        final ChatViewModel chatViewModel = new ViewModelProvider(chatFragment).get(ChatViewModel.class);
+        final LiveData<Entity> entityLiveData = chatViewModel.getEntitybyid((long) s.getId());
+        entityLiveData.observe(chatFragment, new Observer<Entity>() {
             @Override
-            public void run() {
-                Uri uri = Uri.parse(Database.getInstance(context).dao().getdatabyid(s.getId()).getLocalpath());
+            public void onChanged(Entity entity) {
+                entityLiveData.removeObserver(this);
+                if (entityLiveData.hasObservers())
+                    return;
+                Log.d("entityyyy", "inimage");
+
+                Uri uri = Uri.parse(entity.getLocalpath());
                 InputStream inputStream = null;
                 try {
                     inputStream = chatFragment.getContentResolver().openInputStream(uri);
@@ -346,10 +308,9 @@ public class ChatAdapter extends ListAdapter {
                             Toast.makeText(context, "could not load image", Toast.LENGTH_SHORT).show();
                     }
                 });
-
             }
         });
-        thread.start();
+
     }
 
 
@@ -376,7 +337,7 @@ public class ChatAdapter extends ListAdapter {
             messageText = itemView.findViewById(R.id.messagereceived);
             linearLayout = itemView.findViewById(R.id.chat_linear_layout);
             frameLayout = itemView.findViewById(R.id.chat_frame_layout);
-            imageButton=itemView.findViewById(R.id.deliveryReport);
+            imageButton = itemView.findViewById(R.id.deliveryReport);
             Log.d("viewTypeentity", "declareditems");
         }
 

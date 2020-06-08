@@ -63,7 +63,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class Adapter extends ListAdapter {
-    private static List<String> list = new ArrayList<>();
+
     Bitmap finalBitmap;
     DatabaseReference userslist_databaseReference;
     DatabaseReference check_if_online;
@@ -96,73 +96,7 @@ public class Adapter extends ListAdapter {
         super.submitList(list != null ? new ArrayList<String>(list) : null);
     }
 
-    void submit() {
-        if (GoogleSignIn.getLastSignedInAccount(context) != null) {
 
-            userslist_databaseReference = database.getReference("users");
-            userslist_databaseReference.child(GoogleSignIn.getLastSignedInAccount(context).getDisplayName()).child("status").setValue("online");
-
-            userslist_databaseReference.addChildEventListener(new ChildEventListener() {
-                @Override
-                public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                    Log.d("datasnapliste", dataSnapshot.toString());
-                    list.add(dataSnapshot.getKey());
-                    submitList(list);
-                }
-
-                @Override
-                public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                    Log.d("datasnaplistt", dataSnapshot.toString());
-                }
-
-                @Override
-                public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-
-                    Log.d("datasnaplistremoved", dataSnapshot.toString());
-                    list.remove(dataSnapshot.getKey());
-                    submitList(list);
-                }
-
-                @Override
-                public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                }
-            });
-
-        }
-
-
-        check_if_online = database.getReference(".info/connected");
-        check_if_online.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                Boolean bool = dataSnapshot.getValue(Boolean.class);
-
-                if (bool) {
-                    if (GoogleSignIn.getLastSignedInAccount(context) != null) {
-                        userslist_databaseReference.child(GoogleSignIn.getLastSignedInAccount(context).getDisplayName())
-                                .child("status").onDisconnect().setValue(ServerValue.TIMESTAMP);
-                        userslist_databaseReference.child(GoogleSignIn.getLastSignedInAccount(context).getDisplayName())
-                                .child("status").setValue("online");
-
-                    }
-                }
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
-
-    }
 
     @NonNull
     @Override
@@ -175,7 +109,7 @@ public class Adapter extends ListAdapter {
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        final String s = list.get(position);
+        final String s = (String) getCurrentList().get(position);
 
         textView.setText(s);
 //
@@ -285,3 +219,4 @@ public class Adapter extends ListAdapter {
     }
 
 }
+

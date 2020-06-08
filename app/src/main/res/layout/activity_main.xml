@@ -1,69 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:background="#e0e0e0"
-    android:layout_height="match_parent">
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/linear"
+    android:background="#e0e0e0">
 
-  android:orientation="vertical"
-    tools:context=".MainActivity">
-    <com.google.android.material.appbar.AppBarLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        >
-        <androidx.appcompat.widget.Toolbar
+
+        <com.google.android.material.appbar.AppBarLayout
+            android:layout_width="match_parent"
+
+            android:layout_height="wrap_content">
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                app:layout_scrollFlags="scroll|exitUntilCollapsed"
+                android:layout_height="wrap_content">
+
+                <com.google.android.gms.common.SignInButton
+                    android:id="@+id/gsignin"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="right"
+                    android:layout_margin="8dp"
+
+                    />
+            </androidx.appcompat.widget.Toolbar>
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <Button
+            android:id="@+id/pickimage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="pickimage"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/imageSelected"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/toolbar">
+            android:minHeight="70dp"
+            android:visibility="gone" />
 
-            <com.google.android.gms.common.SignInButton
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                android:layout_gravity="right"
-                android:id="@+id/gsignin"
-
-                />
-        </androidx.appcompat.widget.Toolbar>
-    </com.google.android.material.appbar.AppBarLayout>
-
-    <Button
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
+            android:layout_marginTop="8dp"
+            android:background="#e0e0e0" />
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="pickimage"
-        android:visibility="gone"
-        android:id="@+id/pickimage"/>
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:minHeight="70dp"
-        android:visibility="gone"
-        android:id="@+id/imageSelected"/>
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:layout_width="match_parent"
-        android:background="#e0e0e0"
-        android:layout_marginTop="8dp"
-        android:layout_height="match_parent"
-        android:id="@+id/recycler"/>
-</LinearLayout>
+        android:layout_gravity="bottom|right"
+        android:layout_margin="16dp"
+        app:backgroundTint="#FF9595"
+        app:borderWidth="0dp"
+        app:rippleColor="@color/colorAccent"
+        android:src="@drawable/ic_baseline_add_24"
+        android:id="@+id/add_connections"/>
 
 
-
-    <FrameLayout
-        android:id="@+id/container"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_margin="80dp"
-        android:elevation="16dp"
-        android:visibility="invisible" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

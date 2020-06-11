@@ -91,7 +91,6 @@ public class chatFragment extends AppCompatActivity implements Callback {
     Database localdatabase;
     LiveData<Entity> lastSeenEntity;
     ConstraintLayout constraintLayout;
-
     ChildEventListener acknowledgelistener;
     DatabaseReference acknowledgeReceiveReference;
     DatabaseReference acknowledgeSendReference;

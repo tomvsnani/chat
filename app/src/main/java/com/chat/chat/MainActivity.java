@@ -6,41 +6,34 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
-import android.app.ActivityOptions;
 import android.app.AlertDialog;
-import android.app.Application;
-import android.content.ContentUris;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
-import com.chat.chat.Database.Database;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -70,7 +63,9 @@ public class MainActivity extends AppCompatActivity {
     DatabaseReference userslist_databaseReference;
     FirebaseDatabase database;
     ChildEventListener childEventListener;
-
+    TextView notificationTextview;
+    TextView dataLoadingTextview;
+    ProgressBar dataLoadingProgressBar;
 
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -85,16 +80,19 @@ public class MainActivity extends AppCompatActivity {
         signInButton = findViewById(R.id.gsignin);
         toolbar = findViewById(R.id.toolbar);
         recyclerView = findViewById(R.id.recycler);
+        dataLoadingProgressBar = findViewById(R.id.progressbar);
         pickImage = findViewById(R.id.pickimage);
+        dataLoadingTextview = findViewById(R.id.loadingtextview);
         imageselected = findViewById(R.id.imageSelected);
-        addConnectionsFloatingButton=findViewById(R.id.add_connections);
+        notificationTextview = findViewById(R.id.notification);
+        addConnectionsFloatingButton = findViewById(R.id.add_connections_fab);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
         recyclerView.setLayoutManager(linearLayoutManager);
+        recyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
         adapter = new Adapter(this, googleSignInClient);
         recyclerView.setAdapter(adapter);
         database = FirebaseDatabase.getInstance();
 
-        // setSupportActionBar(toolbar);
         if (!(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
                 && ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -105,6 +103,11 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+    }
+
+    public void notificationClick(View v) {
+        Intent intent = new Intent(this, NotificationActivity.class);
+        startActivity(intent);
     }
 
     @Override
@@ -154,36 +157,39 @@ public class MainActivity extends AppCompatActivity {
                     .child("status")
                     .setValue("online");
 
-            childEventListener = userslist_databaseReference.addChildEventListener(new ChildEventListener() {
-                @Override
-                public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+            childEventListener = userslist_databaseReference.
+                    child(GoogleSignIn.getLastSignedInAccount(MainActivity.this).getDisplayName())
+                    .child("recents")
+                    .addChildEventListener(new ChildEventListener() {
+                        @Override
+                        public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                            dataLoadingProgressBar.setVisibility(View.GONE);
+                            list.add((String) dataSnapshot.getValue());
+                            adapter.submitList(list);
 
-                    list.add(dataSnapshot.getKey());
-                    adapter.submitList(list);
+                        }
 
-                }
+                        @Override
+                        public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
 
-                @Override
-                public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                        }
 
-                }
+                        @Override
+                        public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+                            list.remove(dataSnapshot.getKey());
+                            adapter.submitList(list);
+                        }
 
-                @Override
-                public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-                    list.remove(dataSnapshot.getKey());
-                    adapter.submitList(list);
-                }
+                        @Override
+                        public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
 
-                @Override
-                public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                        }
 
-                }
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
 
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                }
-            });
+                        }
+                    });
 
         }
 
@@ -227,10 +233,11 @@ public class MainActivity extends AppCompatActivity {
         addConnectionsFloatingButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                String[] a = list.toArray(new String[0]);
+                startActivity(new Intent(MainActivity.this,
+                        AddConnectionsActivity.class).putExtra("userList", a));
             }
         });
-
 
 
         pickImage.setOnClickListener(new View.OnClickListener() {

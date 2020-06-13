@@ -11,9 +11,13 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class NotificationAdapter extends ListAdapter {
@@ -75,22 +79,84 @@ public class NotificationAdapter extends ListAdapter {
             addFriendTextview.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    AcceptRequestModelClass acceptRequestModelClass = (AcceptRequestModelClass) getCurrentList().get(getAdapterPosition());
+                    final AcceptRequestModelClass acceptRequestModelClass = (AcceptRequestModelClass) getCurrentList().get(getAdapterPosition());
                     acceptRequestModelClass.setRequestAccepted(true);
                     FirebaseDatabase.getInstance().getReference("users").child(acceptRequestModelClass.getFriendRequestFromUsername())
                             .child("FirendRequests")
                             .child(acceptRequestModelClass.getKey())
                             .setValue(acceptRequestModelClass);
 
-                    FirebaseDatabase.getInstance().getReference("users").child(acceptRequestModelClass.getFriendRequestFromUsername())
-                            .child("connections")
-                            .child(acceptRequestModelClass.getKey())
-                            .setValue(acceptRequestModelClass.getFriendRequestToUsername());
+                   FirebaseDatabase.getInstance().getReference("users")
+                           .child(acceptRequestModelClass.getFriendRequestToUsername())
+                           .child("userdetails").addChildEventListener(new ChildEventListener() {
+                       @Override
+                       public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                           HashMap<String,String> hashMap= (HashMap<String, String>) dataSnapshot.getValue( );
+                           FirebaseDatabase.getInstance().getReference("users")
+                                   .child(acceptRequestModelClass.getFriendRequestFromUsername())
+                                   .child("connections")
+                                   .child(acceptRequestModelClass.getKey())
+                                   .setValue(hashMap);
+                       }
+
+                       @Override
+                       public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+                       }
+
+                       @Override
+                       public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+
+                       }
+
+                       @Override
+                       public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+                       }
+
+                       @Override
+                       public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                       }
+                   });
+
+
                     Log.d("positionnnadapter", String.valueOf(getAdapterPosition()));
-                    FirebaseDatabase.getInstance().getReference("users").child(acceptRequestModelClass.getFriendRequestToUsername())
-                            .child("connections")
-                            .child(acceptRequestModelClass.getKey())
-                            .setValue(acceptRequestModelClass.getFriendRequestFromUsername());
+
+                    FirebaseDatabase.getInstance().getReference("users")
+                            .child(acceptRequestModelClass.getFriendRequestFromUsername())
+                            .child("userdetails").addChildEventListener(new ChildEventListener() {
+                        @Override
+                        public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                            HashMap<String,String> hashMap= (HashMap<String, String>) dataSnapshot.getValue();
+
+                            FirebaseDatabase.getInstance().getReference("users")
+                                    .child(acceptRequestModelClass.getFriendRequestToUsername())
+                                    .child("connections")
+                                    .child(acceptRequestModelClass.getKey())
+                                    .setValue(hashMap);
+                        }
+
+                        @Override
+                        public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+                        }
+
+                        @Override
+                        public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+
+                        }
+
+                        @Override
+                        public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                        }
+                    });
                     List<AcceptRequestModelClass> acceptRequestModelClassList=new ArrayList<>(getCurrentList());
 
                     acceptRequestModelClassList.set(getAdapterPosition(),acceptRequestModelClass);

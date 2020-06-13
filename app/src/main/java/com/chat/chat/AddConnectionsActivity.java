@@ -16,9 +16,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.TextView;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.firebase.database.ChildEventListener;
@@ -29,7 +27,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 public class AddConnectionsActivity extends AppCompatActivity {
@@ -41,7 +39,7 @@ public class AddConnectionsActivity extends AppCompatActivity {
     FirebaseDatabase firebaseDatabase;
     DatabaseReference connectionsReference;
     String googleUsername;
-    List<String> list = new ArrayList<>();
+    List<HashMap<String, String>> list = new ArrayList<HashMap<String, String>>();
     List<String> autoCompleteList = new ArrayList<>();
     ArrayAdapter<String> arrayAdapter;
 
@@ -69,8 +67,10 @@ public class AddConnectionsActivity extends AppCompatActivity {
             connectionsReference.addChildEventListener(new ChildEventListener() {
                 @Override
                 public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
                     if (dataSnapshot.getValue() != null) {
-                        list.add(dataSnapshot.getValue().toString());
+                        HashMap<String ,String> hashMap= (HashMap<String, String>) dataSnapshot.getValue();
+                        list.add(hashMap);
                         connectionsRecyclerViewAdapter.list = list;
                         connectionsRecyclerViewAdapter.notifyDataSetChanged();
                     }

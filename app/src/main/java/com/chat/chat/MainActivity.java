@@ -20,7 +20,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -43,11 +42,12 @@ import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private static final Integer PERMISSION_CONSTANT = 1;
-    private static List<String> list = new ArrayList<>();
+    private static List<HashMap<String, String>> list = new ArrayList<HashMap<String, String>>();
     FloatingActionButton addConnectionsFloatingButton;
     GoogleSignInClient googleSignInClient;
     GoogleSignInAccount googleSignInAccount;
@@ -91,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
         adapter = new Adapter(this, googleSignInClient);
         recyclerView.setAdapter(adapter);
+
         database = FirebaseDatabase.getInstance();
 
         if (!(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
@@ -136,6 +137,7 @@ public class MainActivity extends AppCompatActivity {
                     .child("status")
                     .setValue("online");
 
+
     }
 
 
@@ -157,6 +159,23 @@ public class MainActivity extends AppCompatActivity {
                     .child("status")
                     .setValue("online");
 
+            final HashMap<String,String> hashMap=new HashMap<>();
+            hashMap.put("username",GoogleSignIn.getLastSignedInAccount(this).getDisplayName());
+            hashMap.put("propicurl",GoogleSignIn.getLastSignedInAccount(MainActivity.this).getPhotoUrl().toString());
+            hashMap.put("email",GoogleSignIn.getLastSignedInAccount(MainActivity.this).getEmail());
+
+
+//            userslist_databaseReference
+//                    .child(GoogleSignIn.getLastSignedInAccount(this).getDisplayName())
+//                    .child("propic")
+//                    .setValue((GoogleSignIn.getLastSignedInAccount(MainActivity.this).getPhotoUrl()));
+
+            userslist_databaseReference
+                    .child(GoogleSignIn.getLastSignedInAccount(this).getDisplayName())
+                    .child("userdetails")
+                    .child("details")
+                    .setValue(hashMap);
+
             childEventListener = userslist_databaseReference.
                     child(GoogleSignIn.getLastSignedInAccount(MainActivity.this).getDisplayName())
                     .child("recents")
@@ -164,7 +183,8 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
                             dataLoadingProgressBar.setVisibility(View.GONE);
-                            list.add((String) dataSnapshot.getValue());
+                            HashMap<String,String> hashMap1= (HashMap<String, String>) dataSnapshot.getValue();
+                            list.add(hashMap1);
                             adapter.submitList(list);
 
                         }
@@ -233,9 +253,9 @@ public class MainActivity extends AppCompatActivity {
         addConnectionsFloatingButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String[] a = list.toArray(new String[0]);
+
                 startActivity(new Intent(MainActivity.this,
-                        AddConnectionsActivity.class).putExtra("userList", a));
+                        AddConnectionsActivity.class));
             }
         });
 

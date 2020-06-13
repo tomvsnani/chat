@@ -8,7 +8,7 @@ import androidx.room.RoomDatabase;
 
 import com.chat.chat.Entity;
 
-@androidx.room.Database(entities = {Entity.class}, version = 1, exportSchema = false)
+@androidx.room.Database(entities = {Entity.class}, version = 3, exportSchema = false)
 public abstract class Database extends RoomDatabase {
     private static final Object object = new Object();
     private static Database instance;

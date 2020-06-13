@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.room.ForeignKey;
 import androidx.room.PrimaryKey;
 
+import java.util.HashMap;
 
 
 @androidx.room.Entity(tableName = "Entity")
@@ -25,13 +26,11 @@ public class Entity  {
     private String Message="";
 
     private Long messageId=0L;
-    private String proPicUri;
     private String from;
     private Boolean new_message;
     private String sent_status="y";
     private String to;
     private String localpath;
-    private String purpose="no";
     private Long lastonline=0L;
     private long timeofMessage;
     private String uri=null;
@@ -46,13 +45,7 @@ public class Entity  {
         this.messageId = messageId;
     }
 
-    public String getProPicUri() {
-        return proPicUri;
-    }
 
-    public void setProPicUri(String proPicUri) {
-        this.proPicUri = proPicUri;
-    }
 
 
 
@@ -177,16 +170,16 @@ public class Entity  {
 
 
 
-    public static DiffUtil.ItemCallback<String> diffcallAdapter = new DiffUtil.ItemCallback<String>() {
+    public static DiffUtil.ItemCallback<HashMap<String,String>> diffcallAdapter = new DiffUtil.ItemCallback<HashMap<String,String>>() {
 
         @Override
-        public boolean areItemsTheSame(@NonNull String oldItem, @NonNull String newItem) {
+        public boolean areItemsTheSame(@NonNull HashMap<String,String> oldItem, @NonNull HashMap<String,String> newItem) {
             return oldItem.equals(newItem);
         }
 
 
         @Override
-        public boolean areContentsTheSame(@NonNull String oldItem, @NonNull String newItem) {
+        public boolean areContentsTheSame(@NonNull HashMap<String,String> oldItem, @NonNull HashMap<String,String> newItem) {
 
             return oldItem.equals(newItem);
         }
@@ -195,11 +188,4 @@ public class Entity  {
 
 
 
-    public String getPurpose() {
-        return purpose;
-    }
-
-    public void setPurpose(String purpose) {
-        this.purpose = purpose;
-    }
 }

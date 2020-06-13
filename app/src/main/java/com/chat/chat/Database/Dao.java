@@ -35,6 +35,5 @@ public interface Dao {
     @Query("SELECT * FROM ENTITY WHERE `to`=:to LIMIT 1")
     public LiveData<Entity> get_chat_opened_user(String to);
 
-    @Query("SELECT * FROM ENTITY WHERE purpose=:lastseen")
-    public LiveData<Entity> getpurposeEntity(String lastseen);
+    
 }

@@ -57,6 +57,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.TimeZone;
 
@@ -123,11 +124,12 @@ public class chatFragment extends AppCompatActivity implements Callback {
         Log.d("time", String.valueOf(calendar.getTime()));
         firebaseDatabase = FirebaseDatabase.getInstance();
         firebaseAuth = FirebaseAuth.getInstance();
+        viewModel = new ViewModelProvider(this, new MainViewModelFactory(getApplication(), googleUserName, username)).get(ChatViewModel.class);
 
 
         linearLayoutManager = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
         recyclerView = findViewById(R.id.chatrecycler);
-        chatAdapter = new ChatAdapter(this, googleSignInClient, username, recyclerView);
+        chatAdapter = new ChatAdapter(this, googleSignInClient, username, recyclerView,viewModel);
         recyclerView.setHasFixedSize(true);
         chatAdapter.setHasStableIds(true);
         recyclerView.setAdapter(chatAdapter);
@@ -135,6 +137,8 @@ public class chatFragment extends AppCompatActivity implements Callback {
         recyclerView.setLayoutManager(linearLayoutManager);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+
 
         submit();
 
@@ -183,8 +187,7 @@ public class chatFragment extends AppCompatActivity implements Callback {
 
 
     private void retrieve_local_db() {
-        viewModel = new ViewModelProvider(this, new MainViewModelFactory(getApplication(), googleUserName, username)).get(ChatViewModel.class);
-        viewModel.getTotalChatDataBetweenUsers().observe(chatFragment.this, new Observer<List<Entity>>() {
+           viewModel.getTotalChatDataBetweenUsers().observe(chatFragment.this, new Observer<List<Entity>>() {
             @Override
             public void onChanged(final List<Entity> entities) {
                 for (Entity e : entities)
@@ -194,6 +197,7 @@ public class chatFragment extends AppCompatActivity implements Callback {
             }
         });
     }
+
 
 
     @Override
@@ -235,8 +239,8 @@ public class chatFragment extends AppCompatActivity implements Callback {
         constraintLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(chatFragment.this, ProfileDetailActivity.class);
-                intent.putExtra("user", username);
+                Intent intent = new Intent(chatFragment.this, NewConnectionsProfile.class);
+                intent.putExtra("username", username);
                 startActivity(intent);
             }
         });
@@ -463,8 +467,39 @@ public class chatFragment extends AppCompatActivity implements Callback {
 
     private void retrieve_name_pic() {
         username_on_toolbar_textView.setText(username);
-        Glide.with(chatFragment.this).load(GoogleSignIn.getLastSignedInAccount(chatFragment.this).getPhotoUrl())
-                .transform(new CircleCrop()).into(profileImage);
+        firebaseDatabase.getReference("users")
+                .child(username)
+                .child("userdetails").addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                HashMap<String,String> hashMap= (HashMap<String, String>) dataSnapshot.getValue();
+                Glide.with(chatFragment.this).
+                        load(hashMap.get("propicurl")
+                        )
+                        .transform(new CircleCrop()).into(profileImage);
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
     }
 
 
@@ -527,7 +562,7 @@ public class chatFragment extends AppCompatActivity implements Callback {
                         }
                         Log.d("entityyy4", entityLiveData.hasObservers()+"   "+entityLiveData.hasActiveObservers());
                         Log.d("entityyy", "incallback");
-                        entity.setMessageId(entity1.getMessageId() + 1);
+                        entity.setMessageId(Calendar.getInstance().getTimeInMillis());
 
 
                         messageSendReference.child(messageSendReference.push().getKey()).child("entity").setValue(entity);

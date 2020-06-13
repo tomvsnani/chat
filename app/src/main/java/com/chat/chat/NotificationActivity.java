@@ -7,6 +7,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -39,6 +40,7 @@ List<AcceptRequestModelClass> acceptRequestModelClassList=new ArrayList<>();
         recyclerView.setAdapter(notificationAdapter);
         toolbar=findViewById(R.id.toolbar_notification);
         toolbar.setTitle("Friend Requests");
+        toolbar.setTitleTextColor(Color.WHITE);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         FirebaseDatabase.getInstance().getReference("users")

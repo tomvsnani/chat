@@ -58,34 +58,28 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class Adapter extends ListAdapter {
-
-    Bitmap finalBitmap;
-    DatabaseReference userslist_databaseReference;
-    DatabaseReference check_if_online;
-    private FirebaseDatabase database;
     private Context context;
     private MainActivity mainActivity;
     private GoogleSignInClient googleSignInClient;
     private TextView textView;
     private Button button;
     private ImageView imageView;
-    private Executor executor = Executors.newSingleThreadExecutor();
+
 
 
     Adapter(Context context, GoogleSignInClient googleSignInClient) {
         super(Entity.diffcallAdapter);
-        database = FirebaseDatabase.getInstance();
         FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
         this.googleSignInClient = googleSignInClient;
 
 
         this.context = context;
-        Entity entity = new Entity();
         mainActivity = (MainActivity) context;
 
     }
@@ -93,7 +87,7 @@ public class Adapter extends ListAdapter {
 
     @Override
     public void submitList(@Nullable List list) {
-        super.submitList(list != null ? new ArrayList<String>(list) : null);
+        super.submitList(list != null ? new ArrayList<HashMap<String,String>>(list) : null);
     }
 
 
@@ -109,9 +103,9 @@ public class Adapter extends ListAdapter {
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        final String s = (String) getCurrentList().get(position);
+        final HashMap<String,String> s = (HashMap<String, String>) getCurrentList().get(position);
 
-        textView.setText(s);
+        textView.setText(s.get("username"));
 //
 //        URL url= null;
 //        try {
@@ -126,11 +120,11 @@ public class Adapter extends ListAdapter {
 //        }
 //        ViewCompat.setTransitionName(imageView,s);
 
-        if (!s.equals(GoogleSignIn.getLastSignedInAccount(context).getDisplayName())) {
+        if (!s.get("username").equals(GoogleSignIn.getLastSignedInAccount(context).getDisplayName())) {
             button.setVisibility(View.GONE);
 
         }
-        Glide.with(context).asBitmap().load(GoogleSignIn.getLastSignedInAccount(context).getPhotoUrl())
+        Glide.with(context).asBitmap().load(s.get("propicurl"))
                 .transform(new CircleCrop())
                 .into(imageView);
        // ViewCompat.setTransitionName(imageView, s);
@@ -199,7 +193,7 @@ public class Adapter extends ListAdapter {
                     break;
                 case R.id.constraint:
                     Intent intent = new Intent(context, chatFragment.class);
-                    intent.putExtra("username", (String) (getCurrentList().get(getAdapterPosition())));
+                    intent.putExtra("username",( (HashMap<String,String>) (getCurrentList().get(getAdapterPosition()))).get("username"));
                     context.startActivity(intent);
                     break;
                 case R.id.profileimage:

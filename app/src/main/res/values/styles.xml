@@ -11,14 +11,8 @@
         <item name="colorControlHighlight">@color/colorAccent</item>
         <item name="windowActionBar">false</item>
      <item name="android:windowIsTranslucent">true</item>
-       <item name="android:windowContentTransitions">true</item>
-        <item name="android:windowActivityTransitions">true</item>
-        <item name="android:windowSharedElementEnterTransition">
-            @transition/trans</item>
-        <item name="android:windowSharedElementExitTransition">
-            @transition/trans</item>
-        <item name="android:windowSharedElementReenterTransition">@transition/trans</item>
-        <item name="android:windowAllowEnterTransitionOverlap">true</item>
+        <item name="windowActionModeOverlay">true</item>
+
 
 
     </style>

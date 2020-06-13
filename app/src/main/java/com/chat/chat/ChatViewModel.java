@@ -71,5 +71,15 @@ public class ChatViewModel extends ViewModel {
 
     }
 
+    public void delete(final Entity entity){
+        Thread thread=new Thread(new Runnable() {
+            @Override
+            public void run() {
+                database.dao().delete(entity);
+            }
+        });
+        thread.start();
+    }
+
 
 }

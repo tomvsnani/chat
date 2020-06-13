@@ -21,12 +21,13 @@ import com.google.firebase.database.FirebaseDatabase;
 import org.w3c.dom.Text;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class ConnectionsRecyclerViewAdapter extends RecyclerView.Adapter<ConnectionsRecyclerViewAdapter.Holder> {
 
     Context context;
-    List<String> list = new ArrayList<>();
+    List<HashMap<String,String>> list = new ArrayList<>();
 
     public ConnectionsRecyclerViewAdapter(Context context) {
         this.context = context;
@@ -41,7 +42,7 @@ public class ConnectionsRecyclerViewAdapter extends RecyclerView.Adapter<Connect
 
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
-        ((Holder) (holder)).usernameTextview.setText(list.get(position));
+        ((Holder) (holder)).usernameTextview.setText(list.get(position).get("username"));
     }
 
     @Override
@@ -66,7 +67,7 @@ public class ConnectionsRecyclerViewAdapter extends RecyclerView.Adapter<Connect
                 @Override
                 public void onClick(View v) {
                     Intent intent = new Intent(context, chatFragment.class);
-                    intent.putExtra("username", (String) (list.get(getAdapterPosition())));
+                    intent.putExtra("username", (String) (list.get(getAdapterPosition()).get("username")));
                     context.startActivity(intent);
 
                   String key=  FirebaseDatabase.getInstance().getReference("users")

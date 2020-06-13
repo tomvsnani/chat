@@ -11,8 +11,11 @@ import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
+import android.view.ActionMode;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
@@ -59,13 +62,19 @@ public class ChatAdapter extends ListAdapter<Entity, RecyclerView.ViewHolder> {
     SimpleDateFormat simpleDateFormat;
     String username;
     RecyclerView recyclerView;
+    List<Integer> selecetedItems = new ArrayList<>();
+    ActionMode.Callback callback = null;
+    ActionMode actionMode;
+    ChatViewModel chatViewModel;
 
-    protected ChatAdapter(Context context, GoogleSignInClient googleSignInClient, String username, RecyclerView recyclerView) {
+    protected ChatAdapter(Context context, GoogleSignInClient googleSignInClient, String username,
+                          RecyclerView recyclerView, ChatViewModel chatViewModel) {
         super(Entity.diffcall);
 
         this.googleSignInClient = googleSignInClient;
 
         this.context = context;
+        this.chatViewModel = chatViewModel;
         this.chatFragment = (com.chat.chat.chatFragment) context;
         simpleDateFormat = new SimpleDateFormat("yyyy-MMM-dd hh:mm a", Locale.getDefault());
         simpleDateFormat.setTimeZone(TimeZone.getDefault());
@@ -330,15 +339,90 @@ public class ChatAdapter extends ListAdapter<Entity, RecyclerView.ViewHolder> {
         LinearLayout frameLayout;
         ImageButton imageButton;
 
-        Holder(@NonNull View itemView) {
+        Holder(@NonNull final View itemView) {
             super(itemView);
-            Log.d("viewTypeentity", "inviewholder");
             fromtext = itemView.findViewById(R.id.fromwhom);
             messageText = itemView.findViewById(R.id.messagereceived);
             linearLayout = itemView.findViewById(R.id.chat_linear_layout);
             frameLayout = itemView.findViewById(R.id.chat_frame_layout);
             imageButton = itemView.findViewById(R.id.deliveryReport);
-            Log.d("viewTypeentity", "declareditems");
+            setUpClickListeners(itemView);
+        }
+
+
+        private void setUpClickListeners(@NonNull View itemView) {
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (callback != null) {
+
+                        if (selecetedItems.contains(getAdapterPosition())) {
+                            v.setSelected(false);
+                            selecetedItems.remove((Integer) getAdapterPosition());
+                        } else {
+                            v.setSelected(true);
+                            selecetedItems.add(getAdapterPosition());
+                        }
+                        actionMode.setTitle(String.valueOf(selecetedItems.size()));
+                        if (selecetedItems.size() == 0)
+                            actionMode.finish();
+                    }
+                }
+            });
+
+            itemView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(final View v) {
+                    if (callback != null)
+                        return false;
+                    v.setSelected(true);
+                    selecetedItems.add(getAdapterPosition());
+                    callback = new ActionMode.Callback() {
+                        @Override
+                        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+                            chatFragment.getMenuInflater().inflate(R.menu.chatmenu, menu);
+                            return true;
+                        }
+
+                        @Override
+                        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                            mode.setTitle(String.valueOf(selecetedItems.size()));
+                            return false;
+                        }
+
+                        @Override
+                        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                            if (item.getItemId() == R.id.delete) {
+                                for (Integer i : selecetedItems) {
+                                    chatViewModel.delete(getCurrentList().get(i));
+                                    Toast.makeText(context, selecetedItems.size() + " messages " +
+                                            "have been deleted", Toast.LENGTH_SHORT).show();
+                                }
+
+                            }
+                            mode.finish();
+                            return true;
+                        }
+
+                        @Override
+                        public void onDestroyActionMode(ActionMode mode) {
+                            for (Integer i : selecetedItems) {
+                                RecyclerView.ViewHolder v = recyclerView.findViewHolderForAdapterPosition(i);
+                                if (v != null)
+                                    v.itemView.setSelected(false);
+
+                            }
+                            selecetedItems.clear();
+
+                            callback = null;
+                            mode.finish();
+                        }
+                    };
+                    actionMode = chatFragment.startActionMode(callback);
+
+                    return true;
+                }
+            });
         }
 
 
